@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,6 +20,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'locked_flg',
+        'error_count'
     ];
 
     /**
@@ -30,7 +31,6 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     /**
@@ -38,7 +38,42 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // protected $casts = [
+    //     'email_verified_at' => 'datetime',
+    // ];
+
+    public function getUserByEmail($email)
+    {
+        return User::where('email', '=', $email)->first();
+    }
+
+    public function isAccountLocked($user)
+    {
+        if ($user->locked_flg === 1 ) {
+            return true;
+        }
+        return false;
+    }
+
+    public function resetErrorCount($user)
+    {
+        if ($user->error_count > 0) {
+            $user->error_count = 0;
+            $user->save();
+        }
+    }
+
+    public function addErrorCount($error_count)
+    {
+        return $error_count + 1;
+    }
+
+    public function lockAccount($user)
+    {
+        if ($user->error_count > 5) {
+            $user->locked_flg = 1;
+            return $user->save();
+        }
+        return false;
+    }
 }
